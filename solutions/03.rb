@@ -1,11 +1,4 @@
-class InternalRational
-  attr_accessor :numerator
-  attr_accessor :denominator
-
-  def initialize(numerator, denominator)
-    @numerator = numerator
-    @denominator = denominator
-  end
+class InternalRational < Struct.new(:numerator, :denominator)
 end
 
 
