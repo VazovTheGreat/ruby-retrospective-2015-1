@@ -1,38 +1,38 @@
 def move(snake, directions)
-  new_snake = snake.clone
-  new_snake.shift
-  grow(new_snake, directions)
+  new_snake = grow(snake, directions).drop(1)
 end
 
 def grow(snake, directions)
-  new_snake = snake.clone
-  new_head = [new_snake[-1][0] + directions[0],
-              new_snake[-1][1] + directions[1]]
-  new_snake.push(new_head)
-  new_snake
+  new_snake = snake.dup
+  new_snake + [create_new_head(snake, directions)]
 end
 
 def new_food(food, snake, dimensions)
   obstacles = food + snake
-  x_coordinates = (0..dimensions[:width] - 1).to_a
-  y_coordinates = (0..dimensions[:width] - 1).to_a
-  whole_board = x_coordinates.product(y_coordinates)
-  free_board = whole_board - obstacles
-  free_board.sample
+  xs, ys = (0..dimensions[:width] - 1).to_a, (0..dimensions[:height] - 1).to_a
+  whole_board = xs.product(ys)
+  (whole_board - obstacles).sample
 end
 
 def obstacle_ahead?(snake, direction, dimensions)
-  next_position = [snake[-1][0] + direction[0],snake[-1][1] + direction[1]]
-  if snake.include?(next_position) or
-      (next_position[0] < 0 or next_position[0] >= dimensions[:width]) or
-      (next_position[1] < 0 or next_position[1] >= dimensions[:height])
+  next_position = create_new_head(snake, direction)
+  if snake.include?(next_position) or wall_ahead?(next_position, dimensions)
     true
   else
     false
   end
 end
 
+def wall_ahead?(head, dimensions)
+  (head[0] < 0 or head[0] >= dimensions[:width]) or
+  (head[1] < 0 or head[1] >= dimensions[:height])
+end
+
 def danger?(snake, direction, dimensions)
-  obstacle_ahead?(snake, direction, dimensions) and
+  obstacle_ahead?(snake, direction, dimensions) or
       obstacle_ahead?(move(snake, direction), direction, dimensions)
+end
+
+def create_new_head(snake, direction)
+  [snake[-1][0] + direction[0],snake[-1][1] + direction[1]]
 end

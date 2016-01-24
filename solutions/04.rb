@@ -1,40 +1,15 @@
-class Card
-  attr_reader :rank, :suit
-
-  SUITS = [:spades, :hearts, :diamonds, :clubs]
-  RANKS = [*(2..10).collect{ | x | x.to_s.to_sym}, :jack, :queen, :king, :ace]
-
-
-  def initialize(rank, suit)
-    rank = rank.to_s.to_sym
-    suit = suit.to_s.to_sym
-    raise ArgumentError, 'Argument is not known rank' unless RANKS.include? rank
-    raise ArgumentError, 'Argument is not known suit' unless SUITS.include? suit
-
-    @rank = rank
-    @suit = suit
-  end
-
+class Card < Struct.new(:rank, :suit)
   def to_s
-    "#{@rank.capitalize} of #{@suit.capitalize}"
+    "#{rank.to_s.capitalize} of #{suit.to_s.capitalize}"
   end
-
-  def self.suits
-    SUITS
-  end
-
-  def self.ranks
-    RANKS
-  end
-
 end
 
-class BaseDeck
 
+class BaseDeck
   include Enumerable
 
-  ALLOWED_RANKS = Card.ranks
-  ALLOWED_SUITS = Card.suits
+  ALLOWED_SUITS = [:spades, :hearts, :diamonds, :clubs]
+  ALLOWED_RANKS = [2, 3, 4, 5, 6, 7, 8, 9, 10, :jack, :queen, :king, :ace]
 
   def initialize(deck = generate_default_deck)
     @deck = deck
@@ -65,11 +40,11 @@ class BaseDeck
   end
 
   def top_card
-    @deck.last
+    @deck.first
   end
 
   def bottom_card
-    @deck.first
+    @deck.last
   end
 
   def shuffle
@@ -93,13 +68,13 @@ class BaseDeck
 
   private
   def compare_suits(first, second)
-    ALLOWED_SUITS.find_index(first.suit) <=>
-        ALLOWED_SUITS.find_index(second.suit)
+    self.class::ALLOWED_SUITS.find_index(first.suit) <=>
+    self.class::ALLOWED_SUITS.find_index(second.suit)
   end
 
   def compare_ranks(first, second)
     self.class::ALLOWED_RANKS.find_index(first.rank) <=>
-        self.class::ALLOWED_RANKS.find_index(second.rank)
+    self.class::ALLOWED_RANKS.find_index(second.rank)
   end
 end
 
@@ -115,7 +90,7 @@ end
 
 
 class BeloteDeck < BaseDeck
-  ALLOWED_RANKS = [:"7", :"8", :"9", :jack, :queen, :king, :"10", :ace]
+  ALLOWED_RANKS = [7, 8, 9, :jack, :queen, :king, 10, :ace]
   CARDS_IN_HAND  = 8
   def deal
     BeloteHand.new(@deck.take(CARDS_IN_HAND),
@@ -126,7 +101,7 @@ end
 
 
 class SixtySixDeck < BaseDeck
-  ALLOWED_RANKS = [:"9", :jack, :queen, :king, :"10", :ace]
+  ALLOWED_RANKS = [9, :jack, :queen, :king, 10, :ace]
   CARDS_IN_HAND = 6
   def deal
     SixtySixHand.new(@deck.take(CARDS_IN_HAND),
@@ -134,6 +109,7 @@ class SixtySixDeck < BaseDeck
                      self.class::ALLOWED_SUITS)
   end
 end
+
 
 class Hand
   attr_reader :cards, :allowed_ranks, :allowed_suits
@@ -160,10 +136,11 @@ class Hand
   def cards_exist_in_any_suite?(cards, length)
     cards.group_by { |card|
       card.suit
-    }.select{ |suit, cards|
+    }.select{ |_, cards|
       cards.length >= length }.length > 0
   end
 end
+
 
 class WarHand < Hand
   def play_card
@@ -174,6 +151,7 @@ class WarHand < Hand
     @cards.length <= 3
   end
 end
+
 
 class BeloteHand < Hand
   def highest_of_suit(suit)
@@ -205,7 +183,7 @@ class BeloteHand < Hand
   end
 
   def carre_of_nines?
-    fetch_cards([:"9"]).length == 4
+    fetch_cards([9]).length == 4
   end
 
   def carre_of_aces?
@@ -214,14 +192,14 @@ class BeloteHand < Hand
 
   private
   def rank_sequence?(length)
-    allowed_ranks.each_cons(length).any? { |sequence|
+    allowed_ranks.each_cons(length).any? do |sequence|
       cards_exist_in_any_suite?(fetch_cards(sequence), length)
-    }
+    end
   end
 end
 
-class SixtySixHand < Hand
 
+class SixtySixHand < Hand
   def twenty?(trump_suit)
     cards_exist_in_any_suite?(fetch_cards([:queen, :king], [trump_suit]), 2)
   end
@@ -229,5 +207,4 @@ class SixtySixHand < Hand
   def forty?(trump_suit)
     filter_cards_by_suit(fetch_cards([:queen, :king]), trump_suit).length == 2
   end
-
 end
